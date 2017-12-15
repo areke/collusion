@@ -11,7 +11,7 @@
 using namespace std;
 
 const int NUM_VOTERS = 1000;
-const int NUM_CANDIDATES = 6;
+const int NUM_CANDIDATES = 10;
 const int NUM_COLLUDERS = 2;
 
 struct voter {
@@ -126,6 +126,7 @@ int main() {
                         best = voters[i].c[currRankings[k].second];
                         continue;
                     }
+                    
                     currRankings[voters[j].cv].first--;
                     currRankings[k].first++;
                     if (currRankings[0].first < currRankings[k].first || (currRankings[0].first == currRankings[k].first && currRankings[k].second < currRankings[0].second)) {
