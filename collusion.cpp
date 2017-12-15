@@ -11,7 +11,7 @@
 using namespace std;
 
 const int NUM_VOTERS = 1000;
-const int NUM_CANDIDATES = 10;
+const int NUM_CANDIDATES = 6;
 const int NUM_COLLUDERS = 2;
 
 struct voter {
@@ -29,14 +29,16 @@ struct voter {
 };
 
 struct voteChange {
-    int from, to;
-    voteChange(int f, int t) {
+    int from, to, who;
+    voteChange(int f, int t, int x) {
         from = f;
         to = t;
+        who = x;
     }
     voteChange() {
         from = -1;
         to = -1;
+        who = -1;
     }
     bool operator==(const voteChange & o) {
         return o.from == from && o.to == to;
@@ -49,7 +51,7 @@ struct voteChange {
     }
 };
 
-const voteChange noChange = voteChange(-1, -1);
+const voteChange noChange = voteChange(-1, -1, -1);
 
 
 
@@ -95,7 +97,6 @@ int main() {
     bool notFinished = true;
     int cnt = 0;
     while (notFinished) {
-        
         for (int i = 0; i < NUM_CANDIDATES; i++) {
             cout << trueRankings[i].second << " " << trueRankings[i].first << endl;
         }
@@ -105,14 +106,14 @@ int main() {
         bool hasColluded[NUM_VOTERS] = {0};
         for (int i = 0; i < NUM_VOTERS; i++) {
             if (hasColluded[i]) continue;
+            vector<pair<int, int> > currRankings = trueRankings;
+            int best = voters[i].c[currRankings[0].second];
+            voteChange a = noChange;
+            voteChange b = noChange;
             for (int j = i + 1; j < NUM_VOTERS; j++) {
                 if (hasColluded[j]) continue;
                 if (i == j) continue;
                 if (!friendGraph[i][j]) continue;
-                vector<pair<int, int> > currRankings = trueRankings;
-                int best = voters[i].c[currRankings[0].second];
-                voteChange a = noChange;
-                voteChange b = noChange;
                 for (int k = 1; k < NUM_CANDIDATES; k++) {
                     currRankings = trueRankings;
                     if (currRankings[0].first - currRankings[k].first > 4) break;
@@ -120,29 +121,28 @@ int main() {
                     currRankings[voters[i].cv].first--;
                     currRankings[k].first++;
                     if (currRankings[0].first < currRankings[k].first || (currRankings[0].first == currRankings[k].first && currRankings[k].second < currRankings[0].second)) {
-                        a = voteChange(voters[i].cv, currRankings[k].second);
-                        b = voteChange(-1, -1);
-                        hasColluded[i] = 1;
+                        a = voteChange(voters[i].cv, currRankings[k].second, i);
+                        b = voteChange(-1, -1, -1);
+                        best = voters[i].c[currRankings[k].second];
                         continue;
                     }
                     currRankings[voters[j].cv].first--;
                     currRankings[k].first++;
                     if (currRankings[0].first < currRankings[k].first || (currRankings[0].first == currRankings[k].first && currRankings[k].second < currRankings[0].second)) {
-                        a = voteChange(voters[i].cv, currRankings[k].second);
-                        b = voteChange(voters[j].cv, currRankings[k].second);
-                        hasColluded[i] = 1;
-                        hasColluded[j] = 1;
+                        a = voteChange(voters[i].cv, currRankings[k].second, j);
+                        b = voteChange(voters[j].cv, currRankings[k].second, j);
+                        best = voters[i].c[currRankings[k].second];
                         continue;
                     }
                 }
-                if (b != noChange) {
-                    voters[j].cv = b.to;
-                }
-                if (a != noChange) {
-                    notFinished = true;
-                    voters[i].cv = a.to;
-                    trueRankings = rankVoters(voters);
-                }
+            }
+            if (a != noChange) {
+                notFinished = true;
+                voters[i].cv = a.to;
+                trueRankings = rankVoters(voters);
+            }
+            if (b != noChange) {
+                voters[b.who].cv = b.to;
             }
         }
     }
