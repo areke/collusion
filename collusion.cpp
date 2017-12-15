@@ -126,7 +126,7 @@ int main() {
                         best = voters[i].c[currRankings[k].second];
                         continue;
                     }
-                    
+                    if (voters[j].c[currRankings[0].second] < voters[j].c[currRankings[k].second]) continue;
                     currRankings[voters[j].cv].first--;
                     currRankings[k].first++;
                     if (currRankings[0].first < currRankings[k].first || (currRankings[0].first == currRankings[k].first && currRankings[k].second < currRankings[0].second)) {
