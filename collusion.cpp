@@ -84,11 +84,20 @@ vector<pair<int, int> > rankVoters(voter* v) {
     return rankings;
 }
 
+vector<int> voterToRank(vector<pair<int, int> > v) {
+    vector<int> ret(NUM_CANDIDATES);
+    for (int i = 0; i < v.size(); i++) {
+        ret[v[i].second] = i;
+    }
+    return ret;
+}
+
 int main() {
 
     voter voters[NUM_VOTERS];
     generateUniformlyRandomVoters(voters);
     vector<pair<int, int> > trueRankings = rankVoters(voters);
+    vector<int> vtr = voterToRank(trueRankings);
     vector<vector<int> > friendGraph(NUM_VOTERS);
     for (int i = 0; i < NUM_VOTERS; i++) {
         friendGraph[i].resize(NUM_VOTERS);
@@ -107,10 +116,11 @@ int main() {
         for (int i = 0; i < NUM_VOTERS; i++) {
             if (hasColluded[i]) continue;
             vector<pair<int, int> > currRankings = trueRankings;
+            vtr = voterToRank(trueRankings);
             int best = voters[i].c[currRankings[0].second];
             voteChange a = noChange;
             voteChange b = noChange;
-            for (int j = i + 1; j < NUM_VOTERS; j++) {
+            for (int j = 0; j < NUM_VOTERS; j++) {
                 if (hasColluded[j]) continue;
                 if (i == j) continue;
                 if (!friendGraph[i][j]) continue;
@@ -118,18 +128,23 @@ int main() {
                     currRankings = trueRankings;
                     if (currRankings[0].first - currRankings[k].first > 4) break;
                     if (best <= voters[i].c[currRankings[k].second]) continue;
-                    currRankings[voters[i].cv].first--;
+                    //cout << currRankings[0].first << " " << currRankings[k].first << endl;
+                    currRankings[vtr[voters[i].cv]].first--;
                     currRankings[k].first++;
-                    if (currRankings[0].first < currRankings[k].first || (currRankings[0].first == currRankings[k].first && currRankings[k].second < currRankings[0].second)) {
+                    if (currRankings[0] < currRankings[k]) {
+                        //cout << currRankings[0].first << " " << currRankings[k].first << endl;
+                        //cout << "---------" << endl;
                         a = voteChange(voters[i].cv, currRankings[k].second, i);
                         b = voteChange(-1, -1, -1);
                         best = voters[i].c[currRankings[k].second];
                         continue;
                     }
                     if (voters[j].c[currRankings[0].second] < voters[j].c[currRankings[k].second]) continue;
-                    currRankings[voters[j].cv].first--;
+                    currRankings[vtr[voters[j].cv]].first--;
                     currRankings[k].first++;
-                    if (currRankings[0].first < currRankings[k].first || (currRankings[0].first == currRankings[k].first && currRankings[k].second < currRankings[0].second)) {
+                    if (currRankings[0] < currRankings[k]) {
+                        //cout << currRankings[0].first << " " << currRankings[k].first << " ?" << endl;
+                        //cout << "---------" << endl;
                         a = voteChange(voters[i].cv, currRankings[k].second, j);
                         b = voteChange(voters[j].cv, currRankings[k].second, j);
                         best = voters[i].c[currRankings[k].second];
@@ -141,11 +156,20 @@ int main() {
                 notFinished = true;
                 voters[i].cv = a.to;
                 trueRankings = rankVoters(voters);
+                vtr = voterToRank(trueRankings);
             }
             if (b != noChange) {
                 voters[b.who].cv = b.to;
             }
         }
     }
-    
+    cnt = 0;
+    for (int i = 0; i < NUM_VOTERS; i++) {
+        if (voters[i].cv != trueRankings[0].second && voters[i].cv != trueRankings[1].second) {
+            if (voters[i].c[trueRankings[0].second] > voters[i].c[trueRankings[1].second]) {
+                cnt++;
+            }
+        }
+    }
+    cout << cnt << endl;
 }
